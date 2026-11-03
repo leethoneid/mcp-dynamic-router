@@ -9,5 +9,6 @@ export interface ServerOptions {
     maxBodyBytes?: number;
     apiKey?: string;
     config?: MCPRouterConfig;
+    allowedOrigins?: string[];
 }
 export declare function createGatewayServer(options?: ServerOptions, routerInstance?: MCPDynamicRouter): http.Server;

@@ -6,6 +6,7 @@
 import { spawn, ChildProcess } from 'node:child_process';
 import readline from 'node:readline';
 import { MCPServerConfig, MCPTool, JSONRPCRequest, JSONRPCResponse } from './types.js';
+import { SecurityGuard } from './security.js';
 
 export interface UpstreamServerSession {
   config: MCPServerConfig;
@@ -63,11 +64,10 @@ export class UpstreamManager {
       return session;
     }
 
-    const env = {
-      ...process.env,
-      ...(config.env || {}),
-      ...(envOverride || {}),
-    };
+    // H1 Fix: Use the explicitly scrubbed environment (passed via envOverride).
+    // If not provided, fallback to scrubbing host environment on-the-fly.
+    // Do NOT spread raw process.env here, as that re-injects sensitive keys!
+    const env = envOverride || new SecurityGuard().scrubEnvironment(process.env as any, config.env || {});
 
     const isWindows = process.platform === 'win32';
     const isCmdScript = isWindows && (
@@ -82,6 +82,11 @@ export class UpstreamManager {
       stdio: ['pipe', 'pipe', 'pipe'],
       shell: isCmdScript,
     });
+
+    // M6 Fix: Drain stderr continuously to prevent pipe buffer saturation (>64KB) from deadlocking child process
+    if (proc.stderr) {
+      proc.stderr.resume();
+    }
 
     const session: UpstreamServerSession = {
       config,

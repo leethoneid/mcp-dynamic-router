@@ -46,7 +46,7 @@ export interface JSONRPCNotification {
 }
 
 export interface MCPToolProperty {
-  type: string;
+  type?: string;
   description?: string;
   enum?: string[];
   items?: MCPToolProperty;
@@ -99,7 +99,6 @@ export interface SecurityPolicy {
   toolAllowlist?: string[];
   toolDenylist?: string[];
   maxPayloadBytes: number;
-  enforceConfigChecksum: boolean;
 }
 
 export interface MCPRouterConfig {

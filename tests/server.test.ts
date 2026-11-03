@@ -116,10 +116,55 @@ describe('MCP Dynamic Router - Production Microservice Gateway Suite', () => {
     }
   });
 
-  test('5. should expose /metrics endpoint returning router telemetry', async () => {
-    const res = await fetch(`http://127.0.0.1:${port}/metrics`);
-    assert.equal(res.status, 200);
-    const metrics = await res.json() as any;
+  test('5. should enforce API key authentication on /metrics endpoint', async () => {
+    // Missing auth header -> 401
+    const resNoAuth = await fetch(`http://127.0.0.1:${port}/metrics`);
+    assert.equal(resNoAuth.status, 401, 'Unauthorized request to /metrics must return 401');
+
+    // Valid auth header -> 200
+    const resAuth = await fetch(`http://127.0.0.1:${port}/metrics`, {
+      headers: { 'Authorization': `Bearer ${TEST_API_KEY}` }
+    });
+    assert.equal(resAuth.status, 200, 'Authorized request to /metrics must succeed');
+    const metrics = await resAuth.json() as any;
     assert.ok(metrics.totalRequests !== undefined);
+  });
+
+  test('6. should narrow CORS to allowed origins and reject wildcard origin', async () => {
+    // Request from allowed origin (localhost)
+    const resLocal = await fetch(`http://127.0.0.1:${port}/health`, {
+      headers: { 'Origin': 'http://localhost:3000' }
+    });
+    assert.equal(resLocal.headers.get('access-control-allow-origin'), 'http://localhost:3000');
+
+    // Request from external untrusted origin -> should NOT return wildcard '*'
+    const resEvil = await fetch(`http://127.0.0.1:${port}/health`, {
+      headers: { 'Origin': 'http://malicious-site.com' }
+    });
+    assert.notEqual(resEvil.headers.get('access-control-allow-origin'), '*');
+    assert.equal(resEvil.headers.get('access-control-allow-origin'), null);
+  });
+
+  test('7. should auto-generate secure ephemeral API key when none provided', async () => {
+    const unkeyedServer = createGatewayServer();
+    let unkeyedPort = 0;
+    await new Promise<void>((resolve) => {
+      unkeyedServer.listen(0, '127.0.0.1', () => {
+        unkeyedPort = (unkeyedServer.address() as any).port;
+        resolve();
+      });
+    });
+
+    try {
+      // Unauthenticated request must be rejected with 401
+      const res = await fetch(`http://127.0.0.1:${unkeyedPort}/mcp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' })
+      });
+      assert.equal(res.status, 401, 'Unkeyed server must still enforce authentication via auto-generated key');
+    } finally {
+      await new Promise<void>((resolve) => unkeyedServer.close(() => resolve()));
+    }
   });
 });

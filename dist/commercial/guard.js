@@ -1,4 +1,5 @@
 import { checkCachedLicense, saveCachedLicense, verifyGumroadLicense, verifyOfflineLicenseToken } from './license.js';
+export const IS_COMMERCIAL_BUILD = process.env.COMMERCIAL_BUILD === 'true';
 export class CommercialLicenseError extends Error {
     code = 'ERR_COMMERCIAL_LICENSE_REQUIRED';
     constructor(message) {

@@ -22,6 +22,8 @@ export declare class SchemaCompressor {
     static compressInputSchema(schema: MCPToolInputSchema): MCPToolInputSchema;
     /**
      * Prunes a single property schema.
+     * M4 Fix: Preserves anyOf/oneOf/allOf/$ref intact without forcing string type.
+     * Retains critical constraints: format, pattern, minimum, maximum, enum, default.
      */
     private static compressProperty;
     /**

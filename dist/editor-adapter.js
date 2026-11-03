@@ -155,8 +155,19 @@ export class EditorAdapter {
     }
     /**
      * Scans and imports upstream server configurations from an existing editor config file.
+     * L1 Fix: Supports 'all' to loop through and import all detected editors.
      */
     static importServersFromEditor(editor, customFilePath) {
+        if (editor === 'all') {
+            const merged = {};
+            for (const ed of Object.keys(this.EDITORS)) {
+                if (ed === 'generic')
+                    continue;
+                const servers = this.importServersFromEditor(ed);
+                Object.assign(merged, servers);
+            }
+            return merged;
+        }
         const targetPath = customFilePath || this.EDITORS[editor]?.defaultConfigPath;
         if (!targetPath || !fs.existsSync(targetPath)) {
             return {};

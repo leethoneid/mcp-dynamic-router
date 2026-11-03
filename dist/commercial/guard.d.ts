@@ -1,4 +1,5 @@
 import { LicenseVerificationResult } from './license.js';
+export declare const IS_COMMERCIAL_BUILD: boolean;
 export declare class CommercialLicenseError extends Error {
     code: string;
     constructor(message: string);

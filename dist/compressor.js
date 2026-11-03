@@ -36,18 +36,18 @@ export class SchemaCompressor {
             return '';
         let cleaned = desc
             .replace(/#+\s+/g, '') // remove markdown headings
-            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // remove links [text](url) -> text
-            .replace(/```[\s\S]*?```/g, '') // remove markdown code blocks
+            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // simplify links [text](url) -> text
             .replace(/\s+/g, ' ')
             .trim();
-        // If description contains multiple sentences, keep the core first 1-2 sentences
-        const sentences = cleaned.split(/(?<=[.?!])\s+/);
-        if (sentences.length > 1 && sentences[0].length >= 25) {
-            cleaned = sentences[0];
-        }
-        // Limit to max 120 chars
-        if (cleaned.length > 120) {
-            cleaned = cleaned.substring(0, 117).trim() + '...';
+        // M4 Fix: Relax limit to 250 characters and preserve complete sentences without blindly deleting code blocks
+        if (cleaned.length > 250) {
+            const sentenceEnd = cleaned.substring(0, 250).lastIndexOf('. ');
+            if (sentenceEnd > 120) {
+                cleaned = cleaned.substring(0, sentenceEnd + 1);
+            }
+            else {
+                cleaned = cleaned.substring(0, 247).trim() + '...';
+            }
         }
         return cleaned;
     }
@@ -74,27 +74,49 @@ export class SchemaCompressor {
     }
     /**
      * Prunes a single property schema.
+     * M4 Fix: Preserves anyOf/oneOf/allOf/$ref intact without forcing string type.
+     * Retains critical constraints: format, pattern, minimum, maximum, enum, default.
      */
     static compressProperty(prop) {
         if (!prop || typeof prop !== 'object') {
             return { type: 'string' };
         }
-        const pruned = {
-            type: prop.type || 'string',
-        };
-        // Compact description
+        // Preserve complex union/reference schemas (anyOf, oneOf, allOf, $ref) intact
+        if (prop.anyOf || prop.oneOf || prop.allOf || prop.$ref) {
+            const complex = { ...prop };
+            if (complex.description) {
+                complex.description = this.compressDescription(complex.description);
+            }
+            return complex;
+        }
+        const pruned = {};
+        if (prop.type) {
+            pruned.type = prop.type;
+        }
+        // Preserve critical constraints
+        if (prop.format !== undefined)
+            pruned.format = prop.format;
+        if (prop.pattern !== undefined)
+            pruned.pattern = prop.pattern;
+        if (prop.minimum !== undefined)
+            pruned.minimum = prop.minimum;
+        if (prop.maximum !== undefined)
+            pruned.maximum = prop.maximum;
+        if (prop.minLength !== undefined)
+            pruned.minLength = prop.minLength;
+        if (prop.maxLength !== undefined)
+            pruned.maxLength = prop.maxLength;
+        if (Array.isArray(prop.enum))
+            pruned.enum = prop.enum;
+        if (prop.default !== undefined)
+            pruned.default = prop.default;
+        // Compact description while retaining semantic meaning
         if (prop.description) {
             let desc = prop.description.replace(/\s+/g, ' ').trim();
-            if (desc.length > 60) {
-                desc = desc.substring(0, 57).trim() + '...';
+            if (desc.length > 200) {
+                desc = desc.substring(0, 197).trim() + '...';
             }
             pruned.description = desc;
-        }
-        if (Array.isArray(prop.enum)) {
-            pruned.enum = prop.enum;
-        }
-        if (prop.default !== undefined) {
-            pruned.default = prop.default;
         }
         if (prop.type === 'array' && prop.items) {
             pruned.items = this.compressProperty(prop.items);
@@ -107,6 +129,10 @@ export class SchemaCompressor {
             if (Array.isArray(prop.required) && prop.required.length > 0) {
                 pruned.required = prop.required;
             }
+        }
+        // If still no type and no children, default to string
+        if (!pruned.type && !pruned.properties && !pruned.items) {
+            pruned.type = 'string';
         }
         return pruned;
     }

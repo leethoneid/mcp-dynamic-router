@@ -31,6 +31,7 @@ export declare class EditorAdapter {
     }>;
     /**
      * Scans and imports upstream server configurations from an existing editor config file.
+     * L1 Fix: Supports 'all' to loop through and import all detected editors.
      */
-    static importServersFromEditor(editor: EditorType, customFilePath?: string): Record<string, MCPServerConfig>;
+    static importServersFromEditor(editor: EditorType | 'all', customFilePath?: string): Record<string, MCPServerConfig>;
 }

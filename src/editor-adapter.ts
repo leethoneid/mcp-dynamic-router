@@ -176,8 +176,19 @@ export class EditorAdapter {
 
   /**
    * Scans and imports upstream server configurations from an existing editor config file.
+   * L1 Fix: Supports 'all' to loop through and import all detected editors.
    */
-  static importServersFromEditor(editor: EditorType, customFilePath?: string): Record<string, MCPServerConfig> {
+  static importServersFromEditor(editor: EditorType | 'all', customFilePath?: string): Record<string, MCPServerConfig> {
+    if (editor === 'all') {
+      const merged: Record<string, MCPServerConfig> = {};
+      for (const ed of Object.keys(this.EDITORS) as EditorType[]) {
+        if (ed === 'generic') continue;
+        const servers = this.importServersFromEditor(ed);
+        Object.assign(merged, servers);
+      }
+      return merged;
+    }
+
     const targetPath = customFilePath || this.EDITORS[editor]?.defaultConfigPath;
     if (!targetPath || !fs.existsSync(targetPath)) {
       return {};

@@ -5,4 +5,6 @@ release-commercial/
 .secrets/
 *.pem
 *.key
+.env*
+mcp-router.json
 .DS_Store

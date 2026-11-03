@@ -331,8 +331,10 @@ async function main() {
     assert.equal(healthData.status, 'ok');
     assert.equal(healthData.service, 'mcp-dynamic-router');
 
-    // Metrics check
-    const metricsRes = await fetch(`http://127.0.0.1:${GATEWAY_PORT}/metrics`);
+    // Metrics check (authenticated)
+    const metricsRes = await fetch(`http://127.0.0.1:${GATEWAY_PORT}/metrics`, {
+      headers: { 'Authorization': `Bearer ${GATEWAY_API_KEY}` }
+    });
     assert.equal(metricsRes.status, 200);
     const metricsData = await metricsRes.json() as any;
     assert.ok(metricsData.totalRequests !== undefined);

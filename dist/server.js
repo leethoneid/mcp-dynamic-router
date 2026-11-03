@@ -3,10 +3,16 @@
  * Implements strict host binding (127.0.0.1), API_KEY auth guard, and payload size defense.
  */
 import http from 'node:http';
+import crypto from 'node:crypto';
 import { MCPDynamicRouter } from './router.js';
 export function createGatewayServer(options = {}, routerInstance) {
     const maxBodyBytes = options.maxBodyBytes ?? 10 * 1024 * 1024; // 10 MB payload limit
-    const apiKey = options.apiKey ?? process.env.API_KEY;
+    // H2 Fix: API key is ALWAYS required. If not set, generate an ephemeral random key on boot.
+    let apiKey = options.apiKey || process.env.API_KEY;
+    if (!apiKey) {
+        apiKey = crypto.randomBytes(24).toString('hex');
+        console.log(`[mcp-router] Gateway security: No API_KEY configured. Auto-generated ephemeral key: ${apiKey}`);
+    }
     const router = routerInstance ?? new MCPDynamicRouter(options.config ?? {
         version: '1.0.0',
         mode: 'virtual',
@@ -16,9 +22,26 @@ export function createGatewayServer(options = {}, routerInstance) {
     const initPromise = router.init().then(() => {
         initialized = true;
     });
+    // H2 Fix: Helper to authenticate requests via Bearer or X-API-Key
+    const checkAuth = (req) => {
+        const authHeader = req.headers['authorization'];
+        const customKey = req.headers['x-api-key'];
+        const token = authHeader?.startsWith('Bearer ')
+            ? authHeader.slice(7).trim()
+            : (typeof customKey === 'string' ? customKey.trim() : undefined);
+        return Boolean(token && token === apiKey);
+    };
     const server = http.createServer(async (req, res) => {
-        // CORS headers for local web tools
-        res.setHeader('Access-Control-Allow-Origin', '*');
+        // H2 Fix: Narrow CORS from '*' to explicit local whitelist or configured origins
+        const origin = req.headers['origin'];
+        const allowedOrigins = options.allowedOrigins || (process.env.CORS_ALLOWED_ORIGINS
+            ? process.env.CORS_ALLOWED_ORIGINS.split(',').map((s) => s.trim())
+            : ['http://localhost', 'http://127.0.0.1', 'http://[::1]']);
+        const isAllowedOrigin = origin && allowedOrigins.some((allowed) => origin === allowed || origin.startsWith(allowed + ':'));
+        if (isAllowedOrigin && origin) {
+            res.setHeader('Access-Control-Allow-Origin', origin);
+            res.setHeader('Access-Control-Allow-Credentials', 'true');
+        }
         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key');
         if (req.method === 'OPTIONS') {
@@ -26,7 +49,7 @@ export function createGatewayServer(options = {}, routerInstance) {
             res.end();
             return;
         }
-        // Health check endpoint
+        // Health check endpoint (public)
         if (req.method === 'GET' && (req.url === '/health' || req.url === '/')) {
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({
@@ -38,8 +61,15 @@ export function createGatewayServer(options = {}, routerInstance) {
             }));
             return;
         }
-        // Metrics endpoint
+        // Metrics endpoint (H2 Fix: Protected by same auth guard to prevent leaking lastActiveQuery)
         if (req.method === 'GET' && req.url === '/metrics') {
+            if (!checkAuth(req)) {
+                res.writeHead(401, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                    error: { code: 401, message: 'Unauthorized: Invalid or missing API key.' }
+                }));
+                return;
+            }
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify(router.getMetrics()));
             return;
@@ -47,19 +77,14 @@ export function createGatewayServer(options = {}, routerInstance) {
         // JSON-RPC HTTP POST Gateway
         if (req.method === 'POST' && (req.url === '/mcp' || req.url === '/rpc')) {
             // 1. API Key Authentication Guard
-            if (apiKey) {
-                const authHeader = req.headers['authorization'];
-                const customKey = req.headers['x-api-key'];
-                const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7).trim() : (typeof customKey === 'string' ? customKey.trim() : undefined);
-                if (!token || token !== apiKey) {
-                    res.writeHead(401, { 'Content-Type': 'application/json' });
-                    res.end(JSON.stringify({
-                        jsonrpc: '2.0',
-                        id: null,
-                        error: { code: -32000, message: 'Unauthorized: Invalid or missing API key.' }
-                    }));
-                    return;
-                }
+            if (!checkAuth(req)) {
+                res.writeHead(401, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                    jsonrpc: '2.0',
+                    id: null,
+                    error: { code: -32000, message: 'Unauthorized: Invalid or missing API key.' }
+                }));
+                return;
             }
             // 2. Payload size limiter & UTF-8 chunk buffering
             let totalBytes = 0;

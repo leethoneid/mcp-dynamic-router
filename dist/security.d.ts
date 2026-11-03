@@ -19,12 +19,10 @@ export declare class SecurityGuard {
     validateToolExecution(toolName: string, args: Record<string, any>, serverConfig?: MCPServerConfig): void;
     /**
      * Recursively scans object properties for path traversal or malicious injection patterns.
+     * L3 Fix: Command chaining only flags execution tools so normal markdown or query text is not blocked.
+     * Path checking includes bare '..', normalized traversal, and Windows/Unix sensitive system paths.
      */
     private sanitizeObject;
-    /**
-     * Generates a deterministic SHA-256 hash for an MCP configuration file to prevent silent TOCTOU tampers.
-     */
-    static calculateConfigChecksum(config: any): string;
     /**
      * Comprehensive security audit on connected servers and exposed tools.
      */

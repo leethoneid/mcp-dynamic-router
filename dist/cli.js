@@ -42,9 +42,19 @@ function loadConfig(configPath) {
             blockPathTraversal: true,
             blockCommandChaining: true,
             scrubSensitiveEnv: true,
-            sensitiveEnvPatterns: ['API_KEY', 'SECRET', 'TOKEN', 'PASSWORD', 'PRIVATE_KEY'],
+            sensitiveEnvPatterns: [
+                'API_KEY',
+                'SECRET',
+                'TOKEN',
+                'PASSWORD',
+                'PRIVATE_KEY',
+                'AWS_SECRET',
+                'GITHUB_TOKEN',
+                'CREDENTIAL',
+                'ACCESS_KEY',
+                'AUTH',
+            ],
             maxPayloadBytes: 10 * 1024 * 1024,
-            enforceConfigChecksum: true,
         },
         servers: {},
     };
@@ -118,9 +128,19 @@ program
             blockPathTraversal: true,
             blockCommandChaining: true,
             scrubSensitiveEnv: true,
-            sensitiveEnvPatterns: ['API_KEY', 'SECRET', 'TOKEN', 'PASSWORD', 'PRIVATE_KEY'],
+            sensitiveEnvPatterns: [
+                'API_KEY',
+                'SECRET',
+                'TOKEN',
+                'PASSWORD',
+                'PRIVATE_KEY',
+                'AWS_SECRET',
+                'GITHUB_TOKEN',
+                'CREDENTIAL',
+                'ACCESS_KEY',
+                'AUTH',
+            ],
             maxPayloadBytes: 10485760,
-            enforceConfigChecksum: true,
         },
         servers: {
             github: {
@@ -146,7 +166,7 @@ program
 program
     .command('import')
     .description('Import existing MCP servers from installed AI editor configurations')
-    .option('-e, --editor <editor>', 'Source editor: antigravity, cursor, claude, codex, zed, windsurf, trae, cline')
+    .option('-e, --editor <editor>', 'Source editor: all, antigravity, cursor, claude, codex, zed, windsurf, trae, cline')
     .option('-f, --file <path>', 'Custom configuration file path')
     .option('-o, --output <path>', 'Output router config path', 'mcp-router.json')
     .action((options) => {
@@ -158,9 +178,51 @@ program
         console.log(`[mcp-router] No existing MCP servers found for ${editor}.`);
         return;
     }
+    // P1-3 Fix: Sanitize args before printing to prevent leaking tokens/passwords to console
+    const sensitivePattern = /(TOKEN|KEY|SECRET|PASSWORD|PASSWD|AUTH|CREDENTIAL|PRIVATE|ACCESS_KEY)/i;
+    const sanitizeCommandArgs = (args) => {
+        const sanitized = [];
+        for (let i = 0; i < args.length; i++) {
+            const arg = args[i];
+            const eqIdx = arg.indexOf('=');
+            if (eqIdx !== -1) {
+                const k = arg.slice(0, eqIdx);
+                if (sensitivePattern.test(k)) {
+                    sanitized.push(`${k}=***`);
+                    continue;
+                }
+            }
+            if (sensitivePattern.test(arg) && arg.startsWith('-') && i + 1 < args.length) {
+                sanitized.push(arg);
+                sanitized.push('***');
+                i++;
+                continue;
+            }
+            sanitized.push(arg);
+        }
+        return sanitized;
+    };
     console.log(`[mcp-router] Successfully discovered ${count} upstream servers:`);
     for (const name of Object.keys(imported)) {
-        console.log(`  - ${name} (${imported[name].command} ${(imported[name].args || []).join(' ')})`);
+        const safeArgs = sanitizeCommandArgs(imported[name].args || []);
+        console.log(`  - ${name} (${imported[name].command} ${safeArgs.join(' ')})`);
+    }
+    // P1-2 Fix: Check for sensitive environment variables and emit desensitized warning
+    const sensitiveEnvKeys = {};
+    for (const [sName, sCfg] of Object.entries(imported)) {
+        if (sCfg.env) {
+            const found = Object.keys(sCfg.env).filter((k) => sensitivePattern.test(k));
+            if (found.length > 0) {
+                sensitiveEnvKeys[sName] = found;
+            }
+        }
+    }
+    if (Object.keys(sensitiveEnvKeys).length > 0) {
+        console.warn('\n[SECURITY WARNING] Imported configuration contains sensitive environment variable keys:');
+        for (const [sName, keys] of Object.entries(sensitiveEnvKeys)) {
+            console.warn(`  - Server '${sName}': [${keys.join(', ')}]`);
+        }
+        console.warn('  Never commit mcp-router.json with cleartext credentials to public repositories!\n');
     }
     const existingConfig = loadConfig(options.output);
     existingConfig.servers = {
@@ -255,7 +317,7 @@ program
     .option('-p, --port <port>', 'Listening port', '3008')
     .option('-h, --host <host>', 'Listening host (default 127.0.0.1)', '127.0.0.1')
     .option('-c, --config <path>', 'Path to mcp-router.json')
-    .option('-k, --api-key <key>', 'Require Bearer/X-API-Key authentication')
+    .option('-k, --api-key <key>', 'Explicit API key for authentication (auto-generates ephemeral key if omitted)')
     .action(async (options) => {
     const config = loadConfig(options.config);
     const port = parseInt(options.port, 10);

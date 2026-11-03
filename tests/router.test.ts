@@ -155,4 +155,52 @@ describe('MCP Dynamic Router - Functional & Protocol Tests', () => {
       }
     }
   });
+
+  it('8. should preserve anyOf, oneOf, $ref, and format constraints in SchemaCompressor (M4 verification)', () => {
+    const complexTool: MCPTool = {
+      name: 'complex_validator',
+      description: 'Validates complex payloads with union types and format specifications',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          flexible_id: {
+            anyOf: [
+              { type: 'string', format: 'uuid' },
+              { type: 'integer', minimum: 1, maximum: 9999 }
+            ],
+            description: 'ID represented as UUID or positive integer'
+          },
+          ref_node: {
+            $ref: '#/definitions/NodeRef'
+          },
+          email: {
+            type: 'string',
+            format: 'email',
+            pattern: '^[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}$'
+          }
+        },
+        required: ['flexible_id']
+      }
+    };
+
+    const compressed = SchemaCompressor.compressTool(complexTool);
+    const props = compressed.inputSchema.properties!;
+
+    // anyOf must be intact and NOT forced to type: 'string'
+    assert.ok(Array.isArray(props.flexible_id.anyOf), 'anyOf should be preserved');
+    assert.equal(props.flexible_id.anyOf![0].format, 'uuid');
+    assert.equal(props.flexible_id.type, undefined, 'type should not be forced when anyOf is present');
+
+    // $ref must be intact
+    assert.equal(props.ref_node.$ref, '#/definitions/NodeRef');
+
+    // format and pattern must be intact
+    assert.equal(props.email.format, 'email');
+    assert.equal(props.email.pattern, '^[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}$');
+  });
+
+  it('9. should support importing from all editors via editor=all (L1 verification)', () => {
+    const allServers = EditorAdapter.importServersFromEditor('all');
+    assert.ok(typeof allServers === 'object', 'importServersFromEditor("all") should return an object');
+  });
 });

@@ -61,7 +61,7 @@ function ensureSigningKey(): string {
     privateKeyEncoding: { type: 'pkcs8', format: 'pem' }
   });
 
-  fs.writeFileSync(secretPath, privateKey, 'utf-8');
+  fs.writeFileSync(secretPath, privateKey, { encoding: 'utf-8', mode: 0o600 });
   fs.writeFileSync(path.join(secretDir, 'commercial-signer.public.pem'), publicKey, 'utf-8');
   console.log(`[Success] Generated new Ed25519 keypair in ${secretDir}`);
   return privateKey;

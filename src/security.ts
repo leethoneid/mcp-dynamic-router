@@ -28,7 +28,6 @@ export class SecurityGuard {
         'AUTH',
       ],
       maxPayloadBytes: 10 * 1024 * 1024, // 10MB
-      enforceConfigChecksum: true,
       ...policy,
     };
   }
@@ -89,25 +88,38 @@ export class SecurityGuard {
 
     // 2. Deep sanitize arguments
     if (this.policy.enableStrictSanitization && args && typeof args === 'object') {
-      this.sanitizeObject(args);
+      const isExecutionTool = /(execute|exec|command|shell|bash|sh$|terminal|run|script|spawn|curl)/i.test(toolName);
+      this.sanitizeObject(args, isExecutionTool);
     }
   }
 
   /**
    * Recursively scans object properties for path traversal or malicious injection patterns.
+   * L3 Fix: Command chaining only flags execution tools so normal markdown or query text is not blocked.
+   * Path checking includes bare '..', normalized traversal, and Windows/Unix sensitive system paths.
    */
-  private sanitizeObject(obj: any): void {
+  private sanitizeObject(obj: any, isExecutionTool: boolean = false): void {
     for (const [key, val] of Object.entries(obj)) {
       if (typeof val === 'string') {
         // Path traversal check
         if (this.policy.blockPathTraversal) {
-          if (val.includes('../') || val.includes('..\\') || val.startsWith('/etc/') || val.includes('~/.ssh')) {
+          const hasTraversal = val === '..' ||
+            val.startsWith('../') || val.startsWith('..\\') ||
+            val.includes('/../') || val.includes('\\..\\') ||
+            val.endsWith('/..') || val.endsWith('\\..');
+
+          const isSensitiveSystemPath =
+            val.startsWith('/etc/') || val.startsWith('/root/') || val.startsWith('/proc/') || val.startsWith('/sys/') ||
+            val.includes('~/.ssh') || val.includes('.ssh/') ||
+            /^[a-zA-Z]:\\Windows/i.test(val) || val.startsWith('\\\\');
+
+          if (hasTraversal || isSensitiveSystemPath) {
             throw new Error(`Security Violation: Suspicious path traversal detected in argument '${key}': ${val}`);
           }
         }
 
         // Command chaining check in execution tools
-        if (this.policy.blockCommandChaining) {
+        if (this.policy.blockCommandChaining && isExecutionTool) {
           const dangerousChaining = [
             /;\s*rm\s+-rf/i,
             /\|\s*curl\s+/i,
@@ -124,17 +136,9 @@ export class SecurityGuard {
           }
         }
       } else if (typeof val === 'object' && val !== null) {
-        this.sanitizeObject(val);
+        this.sanitizeObject(val, isExecutionTool);
       }
     }
-  }
-
-  /**
-   * Generates a deterministic SHA-256 hash for an MCP configuration file to prevent silent TOCTOU tampers.
-   */
-  static calculateConfigChecksum(config: any): string {
-    const serialized = JSON.stringify(config, Object.keys(config).sort());
-    return crypto.createHash('sha256').update(serialized).digest('hex');
   }
 
   /**

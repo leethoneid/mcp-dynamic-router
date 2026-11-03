@@ -199,5 +199,5 @@ export function saveCachedLicense(licenseKey, buyerId, tier = 'SOLO_PRO', cacheP
         verifiedAt,
         signature
     };
-    fs.writeFileSync(cachePath, JSON.stringify(data, null, 2), 'utf-8');
+    fs.writeFileSync(cachePath, JSON.stringify(data, null, 2), { encoding: 'utf-8', mode: 0o600 });
 }
