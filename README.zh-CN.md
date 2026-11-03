@@ -4,11 +4,14 @@
 
 > **面向全球与国内所有流行 AI 编程编辑器的通用 Model Context Protocol (MCP) 动态路由器、上下文修剪与深度安全加固引擎：Google Antigravity、Cursor、Claude Code、OpenAI Codex、Zed / ZCode、Windsurf、Trae（字节跳动）、Cline、Continue 及所有通用 MCP 客户端。**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/License-PolyForm%20Noncommercial%201.0.0-blue.svg)](LICENSE)
 [![Node: >=20](https://img.shields.io/badge/Node->=20-brightgreen.svg)]()
 [![MCP: 2024-11-05](https://img.shields.io/badge/MCP-2024--11--05-blueviolet.svg)]()
 [![Build Status: Passing](https://img.shields.io/badge/Tests-35%2F35%20Passing-emerald.svg)]()
 [![Platform: Win / Linux / macOS](https://img.shields.io/badge/Platform-Win%20%7C%20Linux%20%7C%20macOS-informational.svg)]()
+
+> [!IMPORTANT]
+> **授权声明**：本开源版仅允许个人学习与非商业使用，公司、团队或任何商业用途必须购买商用版授权，未经授权的商业使用构成侵权。
 
 ---
 
@@ -278,7 +281,7 @@ mcp-router serve
 
 ## 🔒 商业加固与防逆向发售体系 (Commercial Release)
 
-- **开源社区版 (Community Edition)**：基于 MIT 协议，包含核心虚拟路由、模式压缩、关键词检索及 Stdio MCP 接口。
+- **开源社区版 (Community Edition)**：基于 PolyForm Noncommercial 1.0.0 协议，包含核心虚拟路由、模式压缩、关键词检索及 Stdio MCP 接口。
 - **商业企业版 (Commercial Pro Edition)**：
   - **定价与分级 (Gumroad)**：Solo Pro 个人买断版 **$29**（支持 3 台设备绑定）/ Team Enterprise 企业版 **$79**（10 席位 + 生产级网关），购买地址：`https://gumroad.com/l/mcp-router-pro`。
   - **Ed25519 离线密码学授权**：数学层面的防仿造由 Ed25519 非对称数字签名（`MCPLIC.*`）与硬件指纹锁保障。私钥物理隔离在本地 `.secrets/` 中，绝对不进入 Git 仓库与发售产物。
@@ -308,6 +311,8 @@ npm run gateway
 
 ---
 
-## 📄 开源许可证 (License)
+## 📄 开源许可证与商用授权 (License & Terms)
 
-社区版遵循 [MIT 许可证](LICENSE)。商业版遵循 [商业最终用户许可协议 (EULA)](COMMERCIAL-EULA.md)。
+社区版遵循 [PolyForm Noncommercial 1.0.0 许可证](LICENSE)。商业版遵循 [商业最终用户许可协议 (EULA)](COMMERCIAL-EULA.md)。
+
+Copyright (c) 2026 Solo Overseas. All rights reserved.

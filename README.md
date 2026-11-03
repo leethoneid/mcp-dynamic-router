@@ -4,11 +4,14 @@
 
 > **Universal Model Context Protocol (MCP) dynamic router, context trimmer, and security guard for all modern AI coding editors: Google Antigravity, Cursor, Claude Code, OpenAI Codex, Zed / ZCode, Windsurf, Trae (ByteDance), Cline, Continue, and generic MCP clients.**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: PolyForm Noncommercial 1.0.0](https://img.shields.io/badge/License-PolyForm%20Noncommercial%201.0.0-blue.svg)](LICENSE)
 [![Node: >=20](https://img.shields.io/badge/Node->=20-brightgreen.svg)]()
 [![MCP: 2024-11-05](https://img.shields.io/badge/MCP-2024--11--05-blueviolet.svg)]()
 [![Build Status: Passing](https://img.shields.io/badge/Tests-35%2F35%20Passing-emerald.svg)]()
 [![Platform: Win / Linux / macOS](https://img.shields.io/badge/Platform-Win%20%7C%20Linux%20%7C%20macOS-informational.svg)]()
+
+> [!IMPORTANT]
+> **Commercial Use Notice**: This open-source edition is licensed for personal, non-commercial use only. Any use by a company, team, or for commercial purposes requires a commercial license. Unauthorized commercial use constitutes infringement.
 
 ---
 
@@ -276,7 +279,7 @@ An offline, zero-dependency HTML dashboard is included in the root directory:
 
 ## 🔒 Commercial Pro Edition & DRM Security
 
-- **Community Edition**: Open source under MIT license. Includes core virtual routing, schema compression, keyword search, and Stdio MCP interface.
+- **Community Edition**: Open source under PolyForm Noncommercial License 1.0.0. Includes core virtual routing, schema compression, keyword search, and Stdio MCP interface.
 - **Commercial Pro Edition**:
   - **Tiered Gumroad Licensing**: Solo Pro **$29** (up to 3 personal devices) / Team Enterprise **$79** (10 seats + Production HTTP Gateway). Purchase at: `https://gumroad.com/l/mcp-router-pro`.
   - **Ed25519 Asymmetric Cryptography**: Anti-counterfeiting mathematically guaranteed by Ed25519 digital signatures (`MCPLIC.*`) and hardware fingerprinting. The private signing key resides strictly in local `.secrets/` and is physically excluded from public Git repositories.
@@ -305,7 +308,9 @@ npm run gateway
 
 ---
 
-## 📄 License
+## 📄 License & Commercial Terms
 
-Community Edition is licensed under the [MIT License](LICENSE).  
+Community Edition is licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE).  
 Commercial Pro Edition is licensed under the [Commercial EULA](COMMERCIAL-EULA.md).
+
+Copyright (c) 2026 Solo Overseas. All rights reserved.
