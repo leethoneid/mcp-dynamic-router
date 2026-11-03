@@ -317,14 +317,20 @@ program
     .option('-p, --port <port>', 'Listening port', '3008')
     .option('-h, --host <host>', 'Listening host (default 127.0.0.1)', '127.0.0.1')
     .option('-c, --config <path>', 'Path to mcp-router.json')
-    .option('-k, --api-key <key>', 'Explicit API key for authentication (auto-generates ephemeral key if omitted)')
+    .option('-k, --api-key <key>', 'Explicit API key for authentication (strongly recommended for production)')
     .action(async (options) => {
     const config = loadConfig(options.config);
     const port = parseInt(options.port, 10);
     // Strict adherence to AGENTS.md 2.4: default host is 127.0.0.1
     const host = options.host || process.env.HOST || '127.0.0.1';
+    const explicitKey = options.apiKey || process.env.API_KEY;
+    if (!explicitKey) {
+        console.warn('\n[SECURITY TIP] Starting with auto-generated ephemeral key.');
+        console.warn('               In production environments, always specify --api-key <key> or set API_KEY');
+        console.warn('               to prevent auto-generated keys from being captured in service logs.\n');
+    }
     const server = createGatewayServer({
-        apiKey: options.apiKey || process.env.API_KEY,
+        apiKey: explicitKey,
         config
     });
     server.listen(port, host, () => {

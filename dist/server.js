@@ -12,6 +12,8 @@ export function createGatewayServer(options = {}, routerInstance) {
     if (!apiKey) {
         apiKey = crypto.randomBytes(24).toString('hex');
         console.log(`[mcp-router] Gateway security: No API_KEY configured. Auto-generated ephemeral key: ${apiKey}`);
+        console.warn(`[mcp-router] [PRODUCTION TIP] For production deployments, always configure --api-key <key> or API_KEY env variable.`);
+        console.warn(`             Do not rely on auto-generated ephemeral keys in production to prevent keys leaking into startup logs.`);
     }
     const router = routerInstance ?? new MCPDynamicRouter(options.config ?? {
         version: '1.0.0',

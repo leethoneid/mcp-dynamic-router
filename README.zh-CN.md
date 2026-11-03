@@ -284,7 +284,8 @@ mcp-router serve
   - **Ed25519 离线密码学授权**：数学层面的防仿造由 Ed25519 非对称数字签名（`MCPLIC.*`）与硬件指纹锁保障。私钥物理隔离在本地 `.secrets/` 中，绝对不进入 Git 仓库与发售产物。
   - **离线授权签发**：作者在本地通过专有脚本签发：`npm run license:issue -- --buyer user@domain.com`（生成私钥及授权缓存文件自动使用 `0600` 最小安全权限写入）。
   - **客户端激活**：买家执行 `mcp-router activate <LICENSE_KEY>`，自动完成硬件绑定与本地安全缓存（14 天离线宽限期）。
-  - **生产级微服务网关 (HTTP Gateway)**：支持 `mcp-router gateway -p 3008`，默认监听 `127.0.0.1`，内置强制 `API_KEY` 权限守卫（显式配置或启动自动生成一次性密钥）、收窄本地 CORS 与 `maxBodyBytes` 请求体防御。
+  - **生产级微服务网关 (HTTP Gateway)**：支持 `mcp-router gateway -p 3008`，默认监听 `127.0.0.1`，内置强制 `API_KEY` 权限守卫、收窄本地 CORS 与 `maxBodyBytes` 请求体防御。
+    > ⚠️ **生产环境安全建议**：生产部署时强烈建议通过 `--api-key <key>` 参数或 `API_KEY` 环境变量显式配置静态密钥。切勿在生产环境依赖启动时自动生成的临时 Key，因为临时 Key 会在启动时打印到标准输出，容易被容器或系统日志收集器留痕外泄。
   - **跨平台打包四级容灾**：运行 `npm run package:commercial`，自动经过 `python3` -> `python` -> `zip` -> `powershell` 四级容灾打包生成 `mcp-router-pro-v1.0.0.zip`。
 
 ---

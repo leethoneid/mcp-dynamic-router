@@ -281,7 +281,8 @@ An offline, zero-dependency HTML dashboard is included in the root directory:
   - **Tiered Gumroad Licensing**: Solo Pro **$29** (up to 3 personal devices) / Team Enterprise **$79** (10 seats + Production HTTP Gateway). Purchase at: `https://gumroad.com/l/mcp-router-pro`.
   - **Ed25519 Asymmetric Cryptography**: Anti-counterfeiting mathematically guaranteed by Ed25519 digital signatures (`MCPLIC.*`) and hardware fingerprinting. The private signing key resides strictly in local `.secrets/` and is physically excluded from public Git repositories.
   - **Offline Grace Period**: Activated licenses are securely cached using machine-bound HMAC hashes, enabling up to 14 days of completely offline operation.
-  - **Production HTTP Gateway**: Built-in microservice (`mcp-router gateway -p 3008`), binding securely to `127.0.0.1` by default, protected by mandatory `API_KEY` authentication (explicit key or auto-generated ephemeral key on startup), narrow localhost CORS, and `maxBodyBytes` payload interception.
+  - **Production HTTP Gateway**: Built-in microservice (`mcp-router gateway -p 3008`), binding securely to `127.0.0.1` by default, protected by mandatory `API_KEY` authentication, narrow localhost CORS, and `maxBodyBytes` payload interception.
+    > ⚠️ **Production Security Tip**: Always explicitly configure `--api-key <key>` or set the `API_KEY` environment variable for production deployments. Do not rely on auto-generated ephemeral keys in production environments, as ephemeral keys are printed to stdout at startup and may be captured by container or system log collectors.
   - **4-Tier Packaging Fallback**: `npm run package:commercial` automatically cascades through `python3` -> `python` -> `zip` -> `Compress-Archive` across all operating systems.
 
 ---
