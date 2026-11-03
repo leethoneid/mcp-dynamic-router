@@ -1,0 +1,8 @@
+node_modules/
+*.log
+*.zip
+release-commercial/
+.secrets/
+*.pem
+*.key
+.DS_Store

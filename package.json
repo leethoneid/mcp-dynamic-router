@@ -1,0 +1,50 @@
+{
+  "name": "mcp-dynamic-router",
+  "version": "1.0.0",
+  "description": "Universal MCP dynamic router, schema trimmer, and tool virtualizer for Antigravity, Cursor, Claude Code, Codex, Zed/Zcode, Windsurf, Trae & all modern AI editors.",
+  "main": "dist/index.js",
+  "bin": {
+    "mcp-router": "dist/cli.js",
+    "mcp": "dist/cli.js"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "build:commercial": "node --import tsx scripts/build-commercial.ts",
+    "package:commercial": "node --import tsx scripts/package-release.ts",
+    "license:issue": "node --import tsx scripts/issue-license.ts",
+    "test": "node --import tsx --test tests/router.test.ts tests/security.test.ts tests/drm.test.ts tests/server.test.ts tests/stress-and-scale.test.ts tests/cross-platform.test.ts",
+    "benchmark": "node --import tsx tests/benchmark.ts",
+    "start": "node --import tsx src/cli.ts",
+    "mcp": "node --import tsx src/cli.ts serve",
+    "serve": "node --import tsx src/cli.ts serve",
+    "gateway": "node --import tsx src/server.ts"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "antigravity",
+    "cursor",
+    "claude-code",
+    "codex",
+    "zed",
+    "zcode",
+    "windsurf",
+    "trae",
+    "context-optimizer",
+    "token-reduction",
+    "router"
+  ],
+  "author": "Solo Overseas",
+  "license": "Commercial / MIT dual",
+  "dependencies": {
+    "commander": "^12.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "esbuild": "^0.28.2",
+    "javascript-obfuscator": "^5.9.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0"
+  }
+}
